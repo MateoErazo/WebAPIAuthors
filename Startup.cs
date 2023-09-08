@@ -1,4 +1,6 @@
-﻿namespace WebAPIAuthors
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace WebAPIAuthors
 {
   public class Startup
   {
@@ -15,6 +17,10 @@
       services.AddEndpointsApiExplorer();
       services.AddSwaggerGen();
 
+      services.AddDbContext<ApplicationDbContext>(options =>
+      {
+        options.UseSqlServer(Configuration["ConnectionStrings:Production"]);
+      }); 
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

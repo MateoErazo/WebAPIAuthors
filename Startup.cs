@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using WebAPIAuthors.Services;
 
 namespace WebAPIAuthors
 {
@@ -20,7 +21,13 @@ namespace WebAPIAuthors
       services.AddDbContext<ApplicationDbContext>(options =>
       {
         options.UseSqlServer(Configuration["ConnectionStrings:Production"]);
-      }); 
+      });
+
+      services.AddTransient<IService,ServiceA>();
+
+      services.AddTransient<ServiceTransient>();
+      services.AddScoped<ServiceScoped>();
+      services.AddSingleton<ServiceSingleton>();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -42,6 +49,7 @@ namespace WebAPIAuthors
       {
         endpoints.MapControllers();
       });
+
     }
   }
 }

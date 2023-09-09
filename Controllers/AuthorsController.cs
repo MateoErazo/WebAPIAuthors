@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAPIAuthors.Entities;
+using WebAPIAuthors.Services;
 
 namespace WebAPIAuthors.Controllers
 {
@@ -11,7 +12,8 @@ namespace WebAPIAuthors.Controllers
   {
     private readonly ApplicationDbContext context;
 
-    public AuthorsController(ApplicationDbContext context) 
+    public AuthorsController(
+      ApplicationDbContext context) 
     {
       this.context = context;
     }

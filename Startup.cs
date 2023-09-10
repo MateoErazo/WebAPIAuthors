@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
+using WebAPIAuthors.Filters;
 using WebAPIAuthors.Middlewares;
 using WebAPIAuthors.Services;
 
@@ -15,7 +17,12 @@ namespace WebAPIAuthors
 
     public void ConfigureServices(IServiceCollection services)
     {
-      services.AddControllers();
+      services.AddControllers(options=>options.Filters.Add(typeof(MyGlobalExceptionFilterAttribute)))
+        .AddJsonOptions(options =>
+        {
+          options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        });
+
       services.AddEndpointsApiExplorer();
       services.AddSwaggerGen();
 
@@ -29,6 +36,15 @@ namespace WebAPIAuthors
       services.AddTransient<ServiceTransient>();
       services.AddScoped<ServiceScoped>();
       services.AddSingleton<ServiceSingleton>();
+
+      services.AddResponseCaching();
+
+      services.AddMemoryCache();
+
+      services.AddTransient<MyActionFilterAttribute>();
+
+      services.AddHostedService<WriteLogInFile>();
+
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
@@ -79,6 +95,8 @@ namespace WebAPIAuthors
       app.UseHttpsRedirection();
 
       app.UseRouting();
+
+      app.UseResponseCaching();
 
       app.UseAuthorization();
 

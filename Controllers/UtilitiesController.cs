@@ -59,6 +59,14 @@ namespace WebAPIAuthors.Controllers
       });
     }
 
+    /// <summary>
+    /// This method help us to try the caching, first It looking for an author
+    /// by it's Id in cache memory, if the Author is fonded It's returned. If not,
+    /// it's searched in database, is saved in cache memory and is returned.
+    /// 
+    /// </summary>
+    /// <param name="authorId"></param>
+    /// <returns>The Author entity if exist. If not return NotFound</returns>
     [HttpGet("cache/{authorId:int}",Name="testCache")]
     public async Task<ActionResult<Author>> TestCache(int authorId)
     {
@@ -69,7 +77,7 @@ namespace WebAPIAuthors.Controllers
 
         if (authorDb is null)
         {
-          return NoContent();
+          return NotFound();
         }
 
         cache.Set(authorId,authorDb);
@@ -79,6 +87,11 @@ namespace WebAPIAuthors.Controllers
       return author;
     }
 
+    /// <summary>
+    /// This method try our action filter which execute an action before and after
+    /// that action of controller is executed
+    /// </summary>
+    /// <returns></returns>
     [HttpGet("actionFilter",Name ="testActionFilter")]
     [ServiceFilter(typeof(MyActionFilterAttribute))]
     public ActionResult TestActionFilter()
@@ -87,6 +100,12 @@ namespace WebAPIAuthors.Controllers
       return NoContent();
     }
 
+    /// <summary>
+    /// This method help us to try an exception filter which send a custom message
+    /// in console when happend an error in global level of the application
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
     [HttpGet("globalExceptionFilter",Name ="testGlobalExceptionFilter")]
     public ActionResult TestGlobalExceptionFilter()
     {

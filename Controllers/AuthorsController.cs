@@ -8,7 +8,7 @@ using WebAPIAuthors.Services;
 namespace WebAPIAuthors.Controllers
 {
 
-    [ApiController]
+  [ApiController]
   [Route("api/authors")]
   public class AuthorsController:ControllerBase
   {
@@ -42,7 +42,7 @@ namespace WebAPIAuthors.Controllers
     /// <param name="id">The unique Id of the author</param>
     /// <returns>An Author identity. If It's not found, return not found</returns>
     [HttpGet("{id:int}",Name ="getSingleAuthorById")]
-    public async Task<ActionResult<Author>> GetSingleAuthorById(int id)
+    public async Task<ActionResult<AuthorGetDTO>> GetSingleAuthorById(int id)
     {
       Author author = await context.Authors.FirstOrDefaultAsync(x=>x.Id == id);
 
@@ -51,7 +51,7 @@ namespace WebAPIAuthors.Controllers
         return NotFound($"There is not an author with id {id}.Please check your Id and try again.");
       }
 
-      return author;
+      return mapper.Map<AuthorGetDTO>(author);
     }
 
     /// <summary>
@@ -60,11 +60,14 @@ namespace WebAPIAuthors.Controllers
     /// <param name="author">The Author object with the data to create</param>
     /// <returns>The location of the new author.</returns>
     [HttpPost(Name = "addNewAuthor")]
-    public async Task<ActionResult> AddNewAuthor(Author author)
+    public async Task<ActionResult> AddNewAuthor(AuthorCreationDTO authorCreationDTO)
     {
+      Author author = mapper.Map<Author>(authorCreationDTO);
       context.Add(author);
       await context.SaveChangesAsync();
-      return CreatedAtRoute("getSingleAuthorById", new {id=author.Id}, author);
+
+      AuthorGetDTO authorDTO = mapper.Map<AuthorGetDTO>(author);
+      return CreatedAtRoute("getSingleAuthorById", new {id=author.Id}, authorDTO);
     }
 
     /// <summary>
@@ -74,7 +77,7 @@ namespace WebAPIAuthors.Controllers
     /// <param name="author">The Author object with the data to update</param>
     /// <returns>No content. If the author not exist, return not found.</returns>
     [HttpPut("{id:int}",Name ="updateCompleteAuthor")]
-    public async Task<ActionResult> UpdateCompleteAuthor(int id, Author author)
+    public async Task<ActionResult> UpdateCompleteAuthor(int id, AuthorCreationDTO authorCreationDTO)
     {
       bool existAuthor = await context.Authors.AnyAsync(x => x.Id == id);
 
@@ -83,6 +86,8 @@ namespace WebAPIAuthors.Controllers
         return NotFound($"There is not an author with id {id}.Please check your Id and try again.");
       }
 
+      Author author = mapper.Map<Author>(authorCreationDTO);
+      author.Id = id;
       context.Update(author);
       await context.SaveChangesAsync();
       return NoContent();

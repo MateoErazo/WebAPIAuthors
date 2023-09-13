@@ -12,5 +12,7 @@ namespace WebAPIAuthors.Entities
     public string Name { get; set; }
 
     public int Age { get; set; }
+
+    public List<AuthorBook> AuthorBooks { get; set; }
   }
 }

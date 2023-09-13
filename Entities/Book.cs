@@ -12,8 +12,7 @@ namespace WebAPIAuthors.Entities
 
     public string Description { get; set; }
 
-    [Required]
-    public int AuthorId { get; set; }
+    public List<AuthorBook> AuthorBooks { get; set; }
 
 
     /// <summary>

@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebAPIAuthors.DTOs.Book;
 using WebAPIAuthors.Entities;
 
 namespace WebAPIAuthors.Controllers
@@ -10,10 +12,14 @@ namespace WebAPIAuthors.Controllers
   public class BooksController:ControllerBase
   {
     private readonly ApplicationDbContext context;
+    private readonly IMapper mapper;
 
-    public BooksController(ApplicationDbContext context) 
+    public BooksController(
+      ApplicationDbContext context,
+      IMapper mapper) 
     {
       this.context = context;
+      this.mapper = mapper;
     }
 
 
@@ -22,10 +28,10 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <returns>The list of all book in database</returns>
     [HttpGet("all", Name = "getAllBooks")]
-    public async Task<ActionResult<List<Book>>> GetAllBooks()
+    public async Task<ActionResult<List<BookGetDTO>>> GetAllBooks()
     {
       List<Book> books = await context.Books.ToListAsync();
-      return books;
+      return mapper.Map<List<BookGetDTO>>(books); 
     }
 
     /// <summary>
@@ -34,7 +40,7 @@ namespace WebAPIAuthors.Controllers
     /// <param name="id">The unique Id of the book</param>
     /// <returns>An Book identity. If It's not found, return not found</returns>
     [HttpGet("{id:int}", Name = "getSingleBookById")]
-    public async Task<ActionResult<Book>> GetSingleBookById(int id)
+    public async Task<ActionResult<BookGetDTO>> GetSingleBookById(int id)
     {
       Book book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
 
@@ -43,7 +49,7 @@ namespace WebAPIAuthors.Controllers
         return NotFound($"There is not an book with id {id}.Please check your Id and try again.");
       }
 
-      return book;
+      return mapper.Map<BookGetDTO>(book);
     }
 
     /// <summary>
@@ -52,18 +58,24 @@ namespace WebAPIAuthors.Controllers
     /// <param name="author">The Book object with the data to create</param>
     /// <returns>The location of the new book.</returns>
     [HttpPost(Name = "addNewBook")]
-    public async Task<ActionResult> AddNewBook(Book book)
+    public async Task<ActionResult> AddNewBook(BookCreationDTO bookCreationDTO)
     {
-      bool existAuthor = await context.Authors.AnyAsync(x => x.Id == book.AuthorId);
+      List<int> authorsIds = await context.Authors
+        .Where(x=>bookCreationDTO.AuthorsIds.Contains(x.Id)).Select(x=>x.Id).ToListAsync();
 
-      if (!existAuthor)
+      if (authorsIds.Count != bookCreationDTO.AuthorsIds.Count)
       {
-        return NotFound($"There is not an author with id {book.AuthorId}.Please check your Id and try again.");
+        return NotFound("One of the Id authors does not exist. Please check and try again.");
       }
 
+      Book book = mapper.Map<Book>(bookCreationDTO);
+
+      SetOrderAuthorsOfBook(book);
       context.Add(book);
       await context.SaveChangesAsync();
-      return CreatedAtRoute("getSingleBookById", new { id = book.Id }, book);
+
+      BookGetDTO bookDTO = mapper.Map<BookGetDTO>(book);
+      return CreatedAtRoute("getSingleBookById", new { id = book.Id }, bookDTO);
     }
 
     /// <summary>
@@ -73,7 +85,7 @@ namespace WebAPIAuthors.Controllers
     /// <param name="author">The Book object with the data to update</param>
     /// <returns>No content. If the book not exist, return not found.</returns>
     [HttpPut("{id:int}", Name = "updateCompleteBook")]
-    public async Task<ActionResult> UpdateCompleteBook(int id, Book book)
+    public async Task<ActionResult> UpdateCompleteBook(int id, BookCreationDTO bookCreationDTO)
     {
       bool existBook = await context.Books.AnyAsync(x => x.Id == id);
 
@@ -82,12 +94,17 @@ namespace WebAPIAuthors.Controllers
         return NotFound($"There is not an book with id {id}.Please check your Id and try again.");
       }
 
-      bool existAuthor = await context.Authors.AnyAsync(x => x.Id == book.AuthorId);
+      List<int> authorsIds = await context.Authors
+        .Where(x => bookCreationDTO.AuthorsIds.Contains(x.Id)).Select(x => x.Id).ToListAsync();
 
-      if (!existAuthor)
+      if (authorsIds.Count != bookCreationDTO.AuthorsIds.Count)
       {
-        return NotFound($"There is not an author with id {book.AuthorId}.Please check your Id and try again.");
+        return NotFound("One of the Id authors does not exist. Please check and try again.");
       }
+
+      Book book = mapper.Map<Book>(bookCreationDTO);
+      book.Id = id;
+      SetOrderAuthorsOfBook (book);
 
       context.Update(book);
       await context.SaveChangesAsync();
@@ -112,6 +129,14 @@ namespace WebAPIAuthors.Controllers
       context.Remove(new Book { Id = id });
       await context.SaveChangesAsync();
       return NoContent();
+    }
+
+    private void SetOrderAuthorsOfBook(Book book)
+    {
+      for (int i =0; i<book.AuthorBooks.Count; i++)
+      {
+        book.AuthorBooks[i].Order = i;
+      }
     }
   }
 }

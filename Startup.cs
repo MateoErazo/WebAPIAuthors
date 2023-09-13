@@ -45,6 +45,8 @@ namespace WebAPIAuthors
 
       services.AddHostedService<WriteLogInFile>();
 
+      services.AddAutoMapper(typeof(Startup));
+
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)

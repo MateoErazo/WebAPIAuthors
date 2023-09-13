@@ -1,21 +1,26 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebAPIAuthors.DTOs.Author;
 using WebAPIAuthors.Entities;
 using WebAPIAuthors.Services;
 
 namespace WebAPIAuthors.Controllers
 {
 
-  [ApiController]
+    [ApiController]
   [Route("api/authors")]
   public class AuthorsController:ControllerBase
   {
     private readonly ApplicationDbContext context;
+    private readonly IMapper mapper;
 
     public AuthorsController(
-      ApplicationDbContext context) 
+      ApplicationDbContext context,
+      IMapper mapper) 
     {
       this.context = context;
+      this.mapper = mapper;
     }
 
 
@@ -24,10 +29,11 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <returns>The list of all authors in database</returns>
     [HttpGet("all",Name ="getAllAuthors")]
-    public async Task<ActionResult<List<Author>>> GetAllAuthors()
+    public async Task<ActionResult<List<AuthorGetDTO>>> GetAllAuthors()
     {
       List<Author> authors = await context.Authors.ToListAsync();
-      return authors;
+      var authorsDTO = mapper.Map<List<AuthorGetDTO>>(authors);
+      return authorsDTO;
     }
 
     /// <summary>

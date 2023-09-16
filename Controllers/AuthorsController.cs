@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAPIAuthors.DTOs.Author;
@@ -116,6 +117,37 @@ namespace WebAPIAuthors.Controllers
       context.Remove(new Author { Id = id});
       await context.SaveChangesAsync();
       return NoContent();
+    }
+
+    [HttpPatch("{idAuthor:int}")]
+    public async Task<ActionResult> UpdatePartialAuthor(int idAuthor, JsonPatchDocument<AuthorPatchDTO> jsonPatchDocument)
+    {
+      if (jsonPatchDocument is null)
+      {
+        return BadRequest();
+      }
+
+      Author author = await context.Authors.FirstOrDefaultAsync(x=>x.Id == idAuthor);
+
+      if (author is null)
+      {
+        return NotFound($"There is not an author with id {idAuthor}");
+      }
+
+      AuthorPatchDTO authorPatchDTO = mapper.Map<AuthorPatchDTO>(author);
+      jsonPatchDocument.ApplyTo(authorPatchDTO, ModelState);
+
+      bool isModelValid = TryValidateModel(authorPatchDTO);
+
+      if (!isModelValid)
+      {
+        return BadRequest(ModelState);
+      }
+
+      mapper.Map(authorPatchDTO,author);
+      await context.SaveChangesAsync();
+      return NoContent();
+
     }
 
   }

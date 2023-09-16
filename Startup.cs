@@ -21,7 +21,7 @@ namespace WebAPIAuthors
         .AddJsonOptions(options =>
         {
           options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-        });
+        }).AddNewtonsoftJson();
 
       services.AddEndpointsApiExplorer();
       services.AddSwaggerGen();

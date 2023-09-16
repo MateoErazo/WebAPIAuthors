@@ -17,6 +17,57 @@ namespace WebAPIAuthors.utilities
 
       CreateMap<BookCreationDTO, Book>()
         .ForMember(x=>x.AuthorBooks,options=>options.MapFrom(MapBookCreationDTOToBook));
+
+      CreateMap<Author, AuthorWithBooksDTO>()
+        .ForMember(x=>x.Books, options=> options.MapFrom(MapAuthorToAuthorWithBooksDTO));
+
+      CreateMap<Book, BookWithAuthorsDTO>()
+        .ForMember(x=>x.Authors, options=>options.MapFrom(MapBookToBookWithAuthors));
+
+    }
+
+    private List<AuthorGetDTO> MapBookToBookWithAuthors(Book book, BookWithAuthorsDTO bookWithAuthorsDTO)
+    {
+      List<AuthorGetDTO> result = new List<AuthorGetDTO>();
+
+      if (book.AuthorBooks is null)
+      {
+        return result;
+      }
+
+      foreach (AuthorBook authorBook in book.AuthorBooks)
+      {
+        result.Add(new AuthorGetDTO 
+        { 
+          Id = authorBook.AuthorId,
+          Name = authorBook.Author.Name,
+          Age = authorBook.Author.Age,
+        });
+      }
+
+      return result;
+    }
+
+    private List<BookGetDTO> MapAuthorToAuthorWithBooksDTO(Author author, AuthorWithBooksDTO authorWithBooksDTO)
+    {
+      List<BookGetDTO> result = new List<BookGetDTO>();
+
+      if (author.AuthorBooks is null)
+      {
+        return result;
+      }
+
+      foreach (AuthorBook authorBook in author.AuthorBooks)
+      {
+        result.Add(new BookGetDTO 
+        {
+          Id=authorBook.BookId,
+          Title = authorBook.Book.Title,
+          Description = authorBook.Book.Description,
+        });
+      }
+
+      return result;
     }
 
     private List<AuthorBook> MapBookCreationDTOToBook(BookCreationDTO bookCreationDTO, Book book)

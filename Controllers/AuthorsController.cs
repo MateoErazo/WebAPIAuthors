@@ -29,10 +29,13 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <returns>The list of all authors in database</returns>
     [HttpGet("all",Name ="getAllAuthors")]
-    public async Task<ActionResult<List<AuthorGetDTO>>> GetAllAuthors()
+    public async Task<ActionResult<List<AuthorWithBooksDTO>>> GetAllAuthors()
     {
-      List<Author> authors = await context.Authors.ToListAsync();
-      var authorsDTO = mapper.Map<List<AuthorGetDTO>>(authors);
+      List<Author> authors = await context.Authors
+        .Include(x=>x.AuthorBooks)
+        .ThenInclude(x=>x.Book)
+        .ToListAsync();
+      var authorsDTO = mapper.Map<List<AuthorWithBooksDTO>>(authors);
       return authorsDTO;
     }
 
@@ -42,16 +45,19 @@ namespace WebAPIAuthors.Controllers
     /// <param name="id">The unique Id of the author</param>
     /// <returns>An Author identity. If It's not found, return not found</returns>
     [HttpGet("{id:int}",Name ="getSingleAuthorById")]
-    public async Task<ActionResult<AuthorGetDTO>> GetSingleAuthorById(int id)
+    public async Task<ActionResult<AuthorWithBooksDTO>> GetSingleAuthorById(int id)
     {
-      Author author = await context.Authors.FirstOrDefaultAsync(x=>x.Id == id);
+      Author author = await context.Authors
+        .Include(x=>x.AuthorBooks)
+        .ThenInclude(x =>x.Book)
+        .FirstOrDefaultAsync(x=>x.Id == id);
 
       if (author is null)
       {
         return NotFound($"There is not an author with id {id}.Please check your Id and try again.");
       }
 
-      return mapper.Map<AuthorGetDTO>(author);
+      return mapper.Map<AuthorWithBooksDTO>(author);
     }
 
     /// <summary>
@@ -79,16 +85,15 @@ namespace WebAPIAuthors.Controllers
     [HttpPut("{id:int}",Name ="updateCompleteAuthor")]
     public async Task<ActionResult> UpdateCompleteAuthor(int id, AuthorCreationDTO authorCreationDTO)
     {
-      bool existAuthor = await context.Authors.AnyAsync(x => x.Id == id);
+      Author author = await context.Authors.FirstOrDefaultAsync(x => x.Id == id);
 
-      if (!existAuthor)
+      if (author is null)
       {
         return NotFound($"There is not an author with id {id}.Please check your Id and try again.");
       }
 
-      Author author = mapper.Map<Author>(authorCreationDTO);
-      author.Id = id;
-      context.Update(author);
+      author = mapper.Map(authorCreationDTO,author);
+      
       await context.SaveChangesAsync();
       return NoContent();
     }

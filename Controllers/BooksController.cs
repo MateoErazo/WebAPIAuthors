@@ -28,10 +28,14 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <returns>The list of all book in database</returns>
     [HttpGet("all", Name = "getAllBooks")]
-    public async Task<ActionResult<List<BookGetDTO>>> GetAllBooks()
+    public async Task<ActionResult<List<BookWithAuthorsDTO>>> GetAllBooks()
     {
-      List<Book> books = await context.Books.ToListAsync();
-      return mapper.Map<List<BookGetDTO>>(books); 
+      List<Book> books = await context.Books
+        .Include(x=>x.AuthorBooks)
+        .ThenInclude(x=>x.Author)
+        .ToListAsync();
+
+      return mapper.Map<List<BookWithAuthorsDTO>>(books); 
     }
 
     /// <summary>
@@ -40,16 +44,19 @@ namespace WebAPIAuthors.Controllers
     /// <param name="id">The unique Id of the book</param>
     /// <returns>An Book identity. If It's not found, return not found</returns>
     [HttpGet("{id:int}", Name = "getSingleBookById")]
-    public async Task<ActionResult<BookGetDTO>> GetSingleBookById(int id)
+    public async Task<ActionResult<BookWithAuthorsDTO>> GetSingleBookById(int id)
     {
-      Book book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
+      Book book = await context.Books
+        .Include(x=>x.AuthorBooks)
+        .ThenInclude(x=>x.Author)
+        .FirstOrDefaultAsync(x => x.Id == id);
 
       if (book is null)
       {
         return NotFound($"There is not an book with id {id}.Please check your Id and try again.");
       }
 
-      return mapper.Map<BookGetDTO>(book);
+      return mapper.Map<BookWithAuthorsDTO>(book);
     }
 
     /// <summary>
@@ -87,9 +94,11 @@ namespace WebAPIAuthors.Controllers
     [HttpPut("{id:int}", Name = "updateCompleteBook")]
     public async Task<ActionResult> UpdateCompleteBook(int id, BookCreationDTO bookCreationDTO)
     {
-      bool existBook = await context.Books.AnyAsync(x => x.Id == id);
+      Book book = await context.Books
+        .Include(x=>x.AuthorBooks)
+        .FirstOrDefaultAsync(x => x.Id == id);
 
-      if (!existBook)
+      if (book is null)
       {
         return NotFound($"There is not an book with id {id}.Please check your Id and try again.");
       }
@@ -102,11 +111,9 @@ namespace WebAPIAuthors.Controllers
         return NotFound("One of the Id authors does not exist. Please check and try again.");
       }
 
-      Book book = mapper.Map<Book>(bookCreationDTO);
-      book.Id = id;
+      book = mapper.Map(bookCreationDTO,book);
+      
       SetOrderAuthorsOfBook (book);
-
-      context.Update(book);
       await context.SaveChangesAsync();
       return NoContent();
     }

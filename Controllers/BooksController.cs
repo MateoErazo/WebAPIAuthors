@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Azure;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAPIAuthors.DTOs.Book;
@@ -136,6 +138,32 @@ namespace WebAPIAuthors.Controllers
       context.Remove(new Book { Id = id });
       await context.SaveChangesAsync();
       return NoContent();
+    }
+
+    [HttpPatch("{idBook:int}")]
+    public async Task<ActionResult> PartialUpdateBook(int idBook, JsonPatchDocument<BookPatchDTO> jsonPatchDocument)
+    {
+      Book book = await context.Books.FirstOrDefaultAsync(x => x.Id == idBook);
+
+      if (book is null)
+      {
+        return NotFound($"There is not an book with id {idBook}. Please check and try again.");
+      }
+
+      BookPatchDTO bookPatchDTO = mapper.Map<BookPatchDTO>(book);
+      jsonPatchDocument.ApplyTo(bookPatchDTO, ModelState);
+
+      bool isModelValid = TryValidateModel(bookPatchDTO);
+
+      if (!isModelValid)
+      {
+        return BadRequest(ModelState);
+      }
+
+      mapper.Map(bookPatchDTO, book);
+      await context.SaveChangesAsync();
+      return NoContent();
+    
     }
 
     private void SetOrderAuthorsOfBook(Book book)

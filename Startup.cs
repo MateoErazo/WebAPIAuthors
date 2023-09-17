@@ -1,5 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 using System.Text.Json.Serialization;
 using WebAPIAuthors.Filters;
 using WebAPIAuthors.Middlewares;
@@ -25,7 +29,35 @@ namespace WebAPIAuthors
         }).AddNewtonsoftJson();
 
       services.AddEndpointsApiExplorer();
-      services.AddSwaggerGen();
+
+      services.AddSwaggerGen(e =>
+      {
+        e.AddSecurityDefinition(name:"Bearer", new OpenApiSecurityScheme
+        {
+          Name="Authorization",
+          Type = SecuritySchemeType.ApiKey,
+          Scheme = "Bearer",
+          BearerFormat = "JWT",
+          In = ParameterLocation.Header
+        });
+
+        e.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+          {
+            new OpenApiSecurityScheme()
+            {
+              Reference = new OpenApiReference()
+              {
+                Type= ReferenceType.SecurityScheme,
+                Id = "Bearer"
+              }
+            },
+
+            new string[]{}
+          }
+        });
+
+      });
 
       services.AddDbContext<ApplicationDbContext>(options =>
       {
@@ -51,6 +83,17 @@ namespace WebAPIAuthors
       services.AddIdentity<IdentityUser, IdentityRole>()
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
+
+      services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
+        {
+          ValidateIssuer = false,
+          ValidateAudience = false,
+          ValidateLifetime = true,
+          ValidateIssuerSigningKey = true,
+          IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JwtKey"])),
+          ClockSkew = TimeSpan.Zero
+        });
 
     }
 

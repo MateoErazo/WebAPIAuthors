@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using Azure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -66,6 +68,8 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <param name="author">The Book object with the data to create</param>
     /// <returns>The location of the new book.</returns>
+     
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost(Name = "addNewBook")]
     public async Task<ActionResult> AddNewBook(BookCreationDTO bookCreationDTO)
     {
@@ -93,6 +97,8 @@ namespace WebAPIAuthors.Controllers
     /// <param name="id">The unique Id Book that would be updated</param>
     /// <param name="author">The Book object with the data to update</param>
     /// <returns>No content. If the book not exist, return not found.</returns>
+   
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPut("{id:int}", Name = "updateCompleteBook")]
     public async Task<ActionResult> UpdateCompleteBook(int id, BookCreationDTO bookCreationDTO)
     {

@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -66,6 +68,8 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <param name="author">The Author object with the data to create</param>
     /// <returns>The location of the new author.</returns>
+
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost(Name = "addNewAuthor")]
     public async Task<ActionResult> AddNewAuthor(AuthorCreationDTO authorCreationDTO)
     {
@@ -83,6 +87,8 @@ namespace WebAPIAuthors.Controllers
     /// <param name="id">The unique Id Author that would be updated</param>
     /// <param name="author">The Author object with the data to update</param>
     /// <returns>No content. If the author not exist, return not found.</returns>
+  
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPut("{id:int}",Name ="updateCompleteAuthor")]
     public async Task<ActionResult> UpdateCompleteAuthor(int id, AuthorCreationDTO authorCreationDTO)
     {

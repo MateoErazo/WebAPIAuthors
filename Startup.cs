@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using WebAPIAuthors.Filters;
 using WebAPIAuthors.Middlewares;
@@ -46,6 +47,10 @@ namespace WebAPIAuthors
       services.AddHostedService<WriteLogInFile>();
 
       services.AddAutoMapper(typeof(Startup));
+
+      services.AddIdentity<IdentityUser, IdentityRole>()
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
 
     }
 

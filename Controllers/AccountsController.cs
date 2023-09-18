@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,6 +12,7 @@ namespace WebAPIAuthors.Controllers
 {
   [ApiController]
   [Route("api/accounts")]
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   public class AccountsController:ControllerBase
   {
     private readonly UserManager<IdentityUser> userManager;
@@ -27,6 +30,7 @@ namespace WebAPIAuthors.Controllers
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<ActionResult<AuthenticationResultDTO>> AddNewUser(UserCredentialsDTO userCredentialsDTO)
     {
       IdentityUser identityUser = new IdentityUser { UserName = userCredentialsDTO.Email, Email = userCredentialsDTO.Email };
@@ -43,6 +47,7 @@ namespace WebAPIAuthors.Controllers
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<ActionResult<AuthenticationResultDTO>> LoginUser(UserCredentialsDTO userCredentialsDTO)
     {
       var loginResult = await signInManager.PasswordSignInAsync(userCredentialsDTO.Email, userCredentialsDTO.Password, false, false);
@@ -57,6 +62,29 @@ namespace WebAPIAuthors.Controllers
       }
     }
 
+    [HttpGet("renewToken")]
+    public async Task<ActionResult<AuthenticationResultDTO>> RenewToken()
+    {
+      Claim userClaim = HttpContext.User.Claims.Where(x => x.Type == "email").FirstOrDefault();
+      return await CreateToken(new UserCredentialsDTO { Email = userClaim.Value});
+    }
+
+    [HttpPost("doAdmin")]
+    public async Task<ActionResult> DoAdmin(EditUserDTO editUserDTO)
+    {
+      IdentityUser identityUser = await userManager.FindByEmailAsync(editUserDTO.Email);
+      await userManager.AddClaimAsync(identityUser,new Claim("isAdmin","1"));
+      return NoContent();
+    }
+
+    [HttpPost("removeAdmin")]
+    public async Task<ActionResult> RemoveAdmin(EditUserDTO editUserDTO)
+    {
+      IdentityUser identityUser = await userManager.FindByEmailAsync(editUserDTO.Email);
+      await userManager.RemoveClaimAsync(identityUser, new Claim("isAdmin", "1"));
+      return NoContent();
+    }
+
     private async Task<AuthenticationResultDTO> CreateToken(UserCredentialsDTO userCredentialsDTO)
     {
       List<Claim> claims = new List<Claim>
@@ -64,6 +92,10 @@ namespace WebAPIAuthors.Controllers
         new Claim("email", userCredentialsDTO.Email),
         new Claim("anything key","anything value")
       };
+
+      IdentityUser identityUser = await userManager.FindByEmailAsync(userCredentialsDTO.Email);
+      var claimsUser = await userManager.GetClaimsAsync(identityUser);
+      claims.AddRange(claimsUser);
 
       var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtKey"]));
 

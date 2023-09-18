@@ -31,6 +31,8 @@ namespace WebAPIAuthors.Controllers
     /// Search all authors in database
     /// </summary>
     /// <returns>The list of all authors in database</returns>
+    
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isAdmin")]
     [HttpGet("all",Name ="getAllAuthors")]
     public async Task<ActionResult<List<AuthorWithBooksDTO>>> GetAllAuthors()
     {
@@ -47,6 +49,8 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <param name="id">The unique Id of the author</param>
     /// <returns>An Author identity. If It's not found, return not found</returns>
+    /// 
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("{id:int}",Name ="getSingleAuthorById")]
     public async Task<ActionResult<AuthorWithBooksDTO>> GetSingleAuthorById(int id)
     {
@@ -69,7 +73,7 @@ namespace WebAPIAuthors.Controllers
     /// <param name="author">The Author object with the data to create</param>
     /// <returns>The location of the new author.</returns>
 
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy ="isAdmin")]
     [HttpPost(Name = "addNewAuthor")]
     public async Task<ActionResult> AddNewAuthor(AuthorCreationDTO authorCreationDTO)
     {
@@ -88,7 +92,7 @@ namespace WebAPIAuthors.Controllers
     /// <param name="author">The Author object with the data to update</param>
     /// <returns>No content. If the author not exist, return not found.</returns>
   
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy ="isAdmin")]
     [HttpPut("{id:int}",Name ="updateCompleteAuthor")]
     public async Task<ActionResult> UpdateCompleteAuthor(int id, AuthorCreationDTO authorCreationDTO)
     {
@@ -110,6 +114,8 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <param name="id">The unique Id Author that would be deleted</param>
     /// <returns>No content. If author not exist, return not found</returns>
+
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isAdmin")]
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> DeleteAuthor(int id)
     {
@@ -125,6 +131,7 @@ namespace WebAPIAuthors.Controllers
       return NoContent();
     }
 
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isAdmin")]
     [HttpPatch("{idAuthor:int}")]
     public async Task<ActionResult> UpdatePartialAuthor(int idAuthor, JsonPatchDocument<AuthorPatchDTO> jsonPatchDocument)
     {

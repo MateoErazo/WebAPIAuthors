@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
 using WebAPIAuthors.Filters;
@@ -18,6 +19,7 @@ namespace WebAPIAuthors
     public Startup(IConfiguration configuration)
     {
       Configuration = configuration;
+      JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
     }
 
     public void ConfigureServices(IServiceCollection services)
@@ -94,6 +96,14 @@ namespace WebAPIAuthors
           IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JwtKey"])),
           ClockSkew = TimeSpan.Zero
         });
+
+      services.AddAuthorization(options =>
+      {
+        options.AddPolicy("isAdmin", policy =>
+        {
+          policy.RequireClaim("isAdmin","1");
+        });
+      });
 
     }
 

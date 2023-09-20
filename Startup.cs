@@ -115,6 +115,8 @@ namespace WebAPIAuthors
 
       services.AddDataProtection();
 
+      services.AddTransient<HashService>();
+
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)

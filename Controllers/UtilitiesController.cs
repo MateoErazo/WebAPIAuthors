@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Server.IIS.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.Extensions.Caching.Memory;
+using System.Reflection.Metadata.Ecma335;
 using WebAPIAuthors.Entities;
 using WebAPIAuthors.Filters;
 using WebAPIAuthors.Services;
@@ -24,6 +25,7 @@ namespace WebAPIAuthors.Controllers
     private readonly IMemoryCache cache;
     private readonly ApplicationDbContext context;
     private readonly ILogger<UtilitiesController> logger;
+    private readonly HashService hashService;
     private readonly IDataProtector dataProtector;
 
     public UtilitiesController(
@@ -35,7 +37,8 @@ namespace WebAPIAuthors.Controllers
       IMemoryCache cache,
       ApplicationDbContext context,
       ILogger<UtilitiesController> logger,
-      IDataProtectionProvider dataProtectionProvider) 
+      IDataProtectionProvider dataProtectionProvider,
+      HashService hashService) 
     {
       this.configuration = configuration;
       this.service = service;
@@ -45,7 +48,28 @@ namespace WebAPIAuthors.Controllers
       this.cache = cache;
       this.context = context;
       this.logger = logger;
+      this.hashService = hashService;
       dataProtector = dataProtectionProvider.CreateProtector(configuration["EncryptKey"]);
+    }
+
+
+    /// <summary>
+    /// This method apply a hash function for a text
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    [HttpPost("hash/{text}")]
+    public ActionResult HashText(string text)
+    {
+      var hash1 = hashService.Hash(text);
+      var hash2 = hashService.Hash(text);
+
+      return Ok(new
+      {
+        text= text,
+        hash1 = hash1,
+        hash2 = hash2,
+      });
     }
 
     /// <summary>

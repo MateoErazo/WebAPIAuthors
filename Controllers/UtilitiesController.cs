@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.IIS.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.Extensions.Caching.Memory;
 using WebAPIAuthors.Entities;
 using WebAPIAuthors.Filters;
 using WebAPIAuthors.Services;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace WebAPIAuthors.Controllers
 {
@@ -13,6 +16,7 @@ namespace WebAPIAuthors.Controllers
   [Route("api/utilities")]
   public class UtilitiesController:ControllerBase
   {
+    private readonly IConfiguration configuration;
     private readonly IService service;
     private readonly ServiceTransient serviceTransient;
     private readonly ServiceScoped serviceScoped;
@@ -20,16 +24,20 @@ namespace WebAPIAuthors.Controllers
     private readonly IMemoryCache cache;
     private readonly ApplicationDbContext context;
     private readonly ILogger<UtilitiesController> logger;
+    private readonly IDataProtector dataProtector;
 
     public UtilitiesController(
+      IConfiguration configuration,
       IService service,
       ServiceTransient serviceTransient,
       ServiceScoped serviceScoped,
       ServiceSingleton serviceSingleton,
       IMemoryCache cache,
       ApplicationDbContext context,
-      ILogger<UtilitiesController> logger) 
+      ILogger<UtilitiesController> logger,
+      IDataProtectionProvider dataProtectionProvider) 
     {
+      this.configuration = configuration;
       this.service = service;
       this.serviceTransient = serviceTransient;
       this.serviceScoped = serviceScoped;
@@ -37,8 +45,59 @@ namespace WebAPIAuthors.Controllers
       this.cache = cache;
       this.context = context;
       this.logger = logger;
+      dataProtector = dataProtectionProvider.CreateProtector(configuration["EncryptKey"]);
     }
 
+    /// <summary>
+    /// This method help us to encrypt a text and after decrypt it.
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    [HttpPost("encryptText")]
+    public ActionResult EncriptText(string text)
+    {
+      var encryptText = dataProtector.Protect(text);
+      var desencryptText = dataProtector.Unprotect(encryptText);
+      return Ok(new
+      {
+        text = text,
+        encryptText = encryptText,
+        desencryptText = desencryptText
+      });
+    }
+
+    /// <summary>
+    /// This method help us to encrypt a text with a limited time and after decrypt it.
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    [HttpPost("encryptByTime")]
+    public ActionResult EncryptByTime(string text)
+    {
+      var dataProtectorByTime = dataProtector.ToTimeLimitedDataProtector();
+      var encryptText = dataProtectorByTime.Protect(text,TimeSpan.FromSeconds(8));
+      //Thread.Sleep(10000);
+      var desencryptText = dataProtectorByTime.Unprotect(encryptText);
+      return Ok(new
+      {
+        text = text,
+        encryptText = encryptText,
+        desencryptText = desencryptText
+      });
+    }
+
+
+
+    /// <summary>
+    /// If you can consume this method from restninja.io and get the response(200 code) that means
+    /// that CORS setup was configured successful.
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("testCors")]
+    public String TestCors()
+    {
+      return "CORS setup successful!";
+    }
 
     /// <summary>
     /// It allow us can to see the diferent services types of .Net and his time life

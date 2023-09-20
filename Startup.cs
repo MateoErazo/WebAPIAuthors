@@ -105,6 +105,16 @@ namespace WebAPIAuthors
         });
       });
 
+      services.AddCors(options =>
+      {
+        options.AddDefaultPolicy(policy =>
+        {
+          policy.WithOrigins(new string[] { "https://restninja.io" }).AllowAnyMethod().AllowAnyHeader();
+        });
+      });
+
+      services.AddDataProtection();
+
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
@@ -155,6 +165,8 @@ namespace WebAPIAuthors
       app.UseHttpsRedirection();
 
       app.UseRouting();
+
+      app.UseCors();
 
       app.UseResponseCaching();
 

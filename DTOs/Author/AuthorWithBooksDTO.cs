@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using WebAPIAuthors.DTOs.Book;
+using WebAPIAuthors.DTOs.HATEOAS;
 using WebAPIAuthors.Validations;
 
 namespace WebAPIAuthors.DTOs.Author
 {
-  public class AuthorWithBooksDTO
+  public class AuthorWithBooksDTO:Resource
   {
     public int Id { get; set; }
 

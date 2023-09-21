@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAPIAuthors.DTOs.Author;
+using WebAPIAuthors.DTOs.HATEOAS;
 using WebAPIAuthors.Entities;
 using WebAPIAuthors.Services;
 
@@ -13,17 +14,21 @@ namespace WebAPIAuthors.Controllers
 
   [ApiController]
   [Route("api/authors")]
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   public class AuthorsController:ControllerBase
   {
     private readonly ApplicationDbContext context;
     private readonly IMapper mapper;
+    private readonly IAuthorizationService authorizationService;
 
     public AuthorsController(
       ApplicationDbContext context,
-      IMapper mapper) 
+      IMapper mapper,
+      IAuthorizationService authorizationService) 
     {
       this.context = context;
       this.mapper = mapper;
+      this.authorizationService = authorizationService;
     }
 
 
@@ -31,17 +36,44 @@ namespace WebAPIAuthors.Controllers
     /// Search all authors in database
     /// </summary>
     /// <returns>The list of all authors in database</returns>
-    
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isAdmin")]
     [HttpGet("all",Name ="getAllAuthors")]
-    public async Task<ActionResult<List<AuthorWithBooksDTO>>> GetAllAuthors()
+    public async Task<ActionResult> GetAllAuthors([FromQuery] bool includeHATEOAS = true)
     {
       List<Author> authors = await context.Authors
         .Include(x=>x.AuthorBooks)
         .ThenInclude(x=>x.Book)
         .ToListAsync();
       var authorsDTO = mapper.Map<List<AuthorWithBooksDTO>>(authors);
-      return authorsDTO;
+
+      if (includeHATEOAS)
+      {
+        authorsDTO.ForEach(async authorDTO => await GenerateLinksAuthor(authorDTO));
+
+        ResourceCollection<AuthorWithBooksDTO> result = new ResourceCollection<AuthorWithBooksDTO>
+        {
+          Values = authorsDTO
+        };
+
+        result.Resources.Add(new DataHATEOAS(
+          link: Url.Link("getAllAuthors", new { }),
+          description: "self",
+          method: "GET"));
+
+        var isAdmin = await authorizationService.AuthorizeAsync(User, "isAdmin");
+
+        if (isAdmin.Succeeded)
+        {
+          result.Resources.Add(new DataHATEOAS(
+          link: Url.Link("addNewAuthor", new { }),
+          description: "add-new-author",
+          method: "POST"));
+        }
+
+        return Ok(result);
+
+      }
+
+      return Ok(authorsDTO);
     }
 
     /// <summary>
@@ -49,8 +81,6 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <param name="id">The unique Id of the author</param>
     /// <returns>An Author identity. If It's not found, return not found</returns>
-    /// 
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("{id:int}",Name ="getSingleAuthorById")]
     public async Task<ActionResult<AuthorWithBooksDTO>> GetSingleAuthorById(int id)
     {
@@ -64,7 +94,11 @@ namespace WebAPIAuthors.Controllers
         return NotFound($"There is not an author with id {id}.Please check your Id and try again.");
       }
 
-      return mapper.Map<AuthorWithBooksDTO>(author);
+      AuthorWithBooksDTO authorWithBooksDTO = mapper.Map<AuthorWithBooksDTO>(author);
+
+      await GenerateLinksAuthor(authorWithBooksDTO);
+
+      return authorWithBooksDTO;
     }
 
     /// <summary>
@@ -116,7 +150,7 @@ namespace WebAPIAuthors.Controllers
     /// <returns>No content. If author not exist, return not found</returns>
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isAdmin")]
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id:int}", Name ="deleteAuthor")]
     public async Task<ActionResult> DeleteAuthor(int id)
     {
       bool existAuthor = await context.Authors.AnyAsync(x => x.Id == id);
@@ -132,19 +166,19 @@ namespace WebAPIAuthors.Controllers
     }
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isAdmin")]
-    [HttpPatch("{idAuthor:int}")]
-    public async Task<ActionResult> UpdatePartialAuthor(int idAuthor, JsonPatchDocument<AuthorPatchDTO> jsonPatchDocument)
+    [HttpPatch("{id:int}",Name ="updatePartialAuthor")]
+    public async Task<ActionResult> UpdatePartialAuthor(int id, JsonPatchDocument<AuthorPatchDTO> jsonPatchDocument)
     {
       if (jsonPatchDocument is null)
       {
         return BadRequest();
       }
 
-      Author author = await context.Authors.FirstOrDefaultAsync(x=>x.Id == idAuthor);
+      Author author = await context.Authors.FirstOrDefaultAsync(x=>x.Id == id);
 
       if (author is null)
       {
-        return NotFound($"There is not an author with id {idAuthor}");
+        return NotFound($"There is not an author with id {id}");
       }
 
       AuthorPatchDTO authorPatchDTO = mapper.Map<AuthorPatchDTO>(author);
@@ -160,6 +194,40 @@ namespace WebAPIAuthors.Controllers
       mapper.Map(authorPatchDTO,author);
       await context.SaveChangesAsync();
       return NoContent();
+
+    }
+
+
+    private async Task GenerateLinksAuthor(AuthorWithBooksDTO authorWithBooksDTO)
+    {
+      List<DataHATEOAS> resourcesAuthor = new List<DataHATEOAS>();
+
+      bool isAuthenticated = User.Identity.IsAuthenticated;
+      var isAdmin = await authorizationService.AuthorizeAsync(User,"isAdmin");
+
+      if (isAuthenticated)
+      {
+        resourcesAuthor.Add(new DataHATEOAS(link: Url.Link("getSingleAuthorById", new { id = authorWithBooksDTO.Id }),
+        description: "self",
+        method: "GET"));
+      }
+
+      if (isAdmin.Succeeded)
+      {
+        resourcesAuthor.Add(new DataHATEOAS(link: Url.Link("updateCompleteAuthor", new { id = authorWithBooksDTO.Id }),
+        description: "update-complete-author",
+        method: "PUT"));
+
+        resourcesAuthor.Add(new DataHATEOAS(link: Url.Link("deleteAuthor", new { id = authorWithBooksDTO.Id }),
+          description: "delete-author",
+          method: "DELETE"));
+
+        resourcesAuthor.Add(new DataHATEOAS(link: Url.Link("updatePartialAuthor", new { id = authorWithBooksDTO.Id }),
+          description: "update-partial-author",
+          method: "PATCH"));
+      }
+      
+      authorWithBooksDTO.Resources = resourcesAuthor;
 
     }
 

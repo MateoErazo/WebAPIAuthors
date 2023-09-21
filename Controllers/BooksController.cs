@@ -13,6 +13,7 @@ namespace WebAPIAuthors.Controllers
 
   [ApiController]
   [Route("api/books")]
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   public class BooksController:ControllerBase
   {
     private readonly ApplicationDbContext context;
@@ -68,8 +69,8 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <param name="author">The Book object with the data to create</param>
     /// <returns>The location of the new book.</returns>
-     
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy ="isAdmin")]
     [HttpPost(Name = "addNewBook")]
     public async Task<ActionResult> AddNewBook(BookCreationDTO bookCreationDTO)
     {
@@ -97,8 +98,7 @@ namespace WebAPIAuthors.Controllers
     /// <param name="id">The unique Id Book that would be updated</param>
     /// <param name="author">The Book object with the data to update</param>
     /// <returns>No content. If the book not exist, return not found.</returns>
-   
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isAdmin")]
     [HttpPut("{id:int}", Name = "updateCompleteBook")]
     public async Task<ActionResult> UpdateCompleteBook(int id, BookCreationDTO bookCreationDTO)
     {
@@ -131,7 +131,8 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <param name="id">The unique Id Book that would be deleted</param>
     /// <returns>No content. If book not exist, return not found</returns>
-    [HttpDelete("{id:int}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy ="isAdmin")]
+    [HttpDelete("{id:int}", Name="deleteBook")]
     public async Task<ActionResult> DeleteBook(int id)
     {
       bool existBook = await context.Books.AnyAsync(x => x.Id == id);
@@ -146,7 +147,8 @@ namespace WebAPIAuthors.Controllers
       return NoContent();
     }
 
-    [HttpPatch("{idBook:int}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isAdmin")]
+    [HttpPatch("{idBook:int}", Name ="partialUpdateBook")]
     public async Task<ActionResult> PartialUpdateBook(int idBook, JsonPatchDocument<BookPatchDTO> jsonPatchDocument)
     {
       Book book = await context.Books.FirstOrDefaultAsync(x => x.Id == idBook);

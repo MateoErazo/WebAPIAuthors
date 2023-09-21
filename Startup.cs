@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -24,7 +25,7 @@ namespace WebAPIAuthors
 
     public void ConfigureServices(IServiceCollection services)
     {
-      services.AddControllers(options=>options.Filters.Add(typeof(MyGlobalExceptionFilterAttribute)))
+      services.AddControllers(options => options.Filters.Add(typeof(MyGlobalExceptionFilterAttribute)))
         .AddJsonOptions(options =>
         {
           options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -34,9 +35,9 @@ namespace WebAPIAuthors
 
       services.AddSwaggerGen(e =>
       {
-        e.AddSecurityDefinition(name:"Bearer", new OpenApiSecurityScheme
+        e.AddSecurityDefinition(name: "Bearer", new OpenApiSecurityScheme
         {
-          Name="Authorization",
+          Name = "Authorization",
           Type = SecuritySchemeType.ApiKey,
           Scheme = "Bearer",
           BearerFormat = "JWT",
@@ -66,7 +67,7 @@ namespace WebAPIAuthors
         options.UseSqlServer(Configuration["ConnectionStrings:Production"]);
       });
 
-      services.AddTransient<IService,ServiceA>();
+      services.AddTransient<IService, ServiceA>();
 
       services.AddTransient<ServiceTransient>();
       services.AddScoped<ServiceScoped>();
@@ -101,7 +102,7 @@ namespace WebAPIAuthors
       {
         options.AddPolicy("isAdmin", policy =>
         {
-          policy.RequireClaim("isAdmin","1");
+          policy.RequireClaim("isAdmin", "1");
         });
       });
 
@@ -116,6 +117,10 @@ namespace WebAPIAuthors
       services.AddDataProtection();
 
       services.AddTransient<HashService>();
+
+      services.AddTransient<LinksGeneratorService>();
+      services.AddTransient<HATEOASAuthorFilterAttribute>();
+      services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
     }
 

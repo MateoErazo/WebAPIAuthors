@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAPIAuthors.DTOs.Author;
 using WebAPIAuthors.DTOs.HATEOAS;
 using WebAPIAuthors.Entities;
+using WebAPIAuthors.Filters;
 using WebAPIAuthors.Services;
 
 namespace WebAPIAuthors.Controllers
@@ -36,44 +37,16 @@ namespace WebAPIAuthors.Controllers
     /// Search all authors in database
     /// </summary>
     /// <returns>The list of all authors in database</returns>
+    [ServiceFilter(typeof(HATEOASAuthorFilterAttribute))]
     [HttpGet("all",Name ="getAllAuthors")]
-    public async Task<ActionResult> GetAllAuthors([FromQuery] bool includeHATEOAS = true)
+    public async Task<ActionResult<List<AuthorWithBooksDTO>>> GetAllAuthors([FromHeader] string includeHATEOAS)
     {
       List<Author> authors = await context.Authors
         .Include(x=>x.AuthorBooks)
         .ThenInclude(x=>x.Book)
         .ToListAsync();
-      var authorsDTO = mapper.Map<List<AuthorWithBooksDTO>>(authors);
 
-      if (includeHATEOAS)
-      {
-        authorsDTO.ForEach(async authorDTO => await GenerateLinksAuthor(authorDTO));
-
-        ResourceCollection<AuthorWithBooksDTO> result = new ResourceCollection<AuthorWithBooksDTO>
-        {
-          Values = authorsDTO
-        };
-
-        result.Resources.Add(new DataHATEOAS(
-          link: Url.Link("getAllAuthors", new { }),
-          description: "self",
-          method: "GET"));
-
-        var isAdmin = await authorizationService.AuthorizeAsync(User, "isAdmin");
-
-        if (isAdmin.Succeeded)
-        {
-          result.Resources.Add(new DataHATEOAS(
-          link: Url.Link("addNewAuthor", new { }),
-          description: "add-new-author",
-          method: "POST"));
-        }
-
-        return Ok(result);
-
-      }
-
-      return Ok(authorsDTO);
+        return mapper.Map<List<AuthorWithBooksDTO>>(authors);
     }
 
     /// <summary>
@@ -81,8 +54,9 @@ namespace WebAPIAuthors.Controllers
     /// </summary>
     /// <param name="id">The unique Id of the author</param>
     /// <returns>An Author identity. If It's not found, return not found</returns>
+    [ServiceFilter(typeof(HATEOASAuthorFilterAttribute))]
     [HttpGet("{id:int}",Name ="getSingleAuthorById")]
-    public async Task<ActionResult<AuthorWithBooksDTO>> GetSingleAuthorById(int id)
+    public async Task<ActionResult<AuthorWithBooksDTO>> GetSingleAuthorById(int id, [FromHeader] string includeHATEOAS)
     {
       Author author = await context.Authors
         .Include(x=>x.AuthorBooks)
@@ -95,8 +69,6 @@ namespace WebAPIAuthors.Controllers
       }
 
       AuthorWithBooksDTO authorWithBooksDTO = mapper.Map<AuthorWithBooksDTO>(author);
-
-      await GenerateLinksAuthor(authorWithBooksDTO);
 
       return authorWithBooksDTO;
     }
@@ -194,40 +166,6 @@ namespace WebAPIAuthors.Controllers
       mapper.Map(authorPatchDTO,author);
       await context.SaveChangesAsync();
       return NoContent();
-
-    }
-
-
-    private async Task GenerateLinksAuthor(AuthorWithBooksDTO authorWithBooksDTO)
-    {
-      List<DataHATEOAS> resourcesAuthor = new List<DataHATEOAS>();
-
-      bool isAuthenticated = User.Identity.IsAuthenticated;
-      var isAdmin = await authorizationService.AuthorizeAsync(User,"isAdmin");
-
-      if (isAuthenticated)
-      {
-        resourcesAuthor.Add(new DataHATEOAS(link: Url.Link("getSingleAuthorById", new { id = authorWithBooksDTO.Id }),
-        description: "self",
-        method: "GET"));
-      }
-
-      if (isAdmin.Succeeded)
-      {
-        resourcesAuthor.Add(new DataHATEOAS(link: Url.Link("updateCompleteAuthor", new { id = authorWithBooksDTO.Id }),
-        description: "update-complete-author",
-        method: "PUT"));
-
-        resourcesAuthor.Add(new DataHATEOAS(link: Url.Link("deleteAuthor", new { id = authorWithBooksDTO.Id }),
-          description: "delete-author",
-          method: "DELETE"));
-
-        resourcesAuthor.Add(new DataHATEOAS(link: Url.Link("updatePartialAuthor", new { id = authorWithBooksDTO.Id }),
-          description: "update-partial-author",
-          method: "PATCH"));
-      }
-      
-      authorWithBooksDTO.Resources = resourcesAuthor;
 
     }
 

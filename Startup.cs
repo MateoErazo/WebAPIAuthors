@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 using WebAPIAuthors.Filters;
 using WebAPIAuthors.Middlewares;
 using WebAPIAuthors.Services;
+using WebAPIAuthors.utilities;
 
 namespace WebAPIAuthors
 {
@@ -25,8 +26,11 @@ namespace WebAPIAuthors
 
     public void ConfigureServices(IServiceCollection services)
     {
-      services.AddControllers(options => options.Filters.Add(typeof(MyGlobalExceptionFilterAttribute)))
-        .AddJsonOptions(options =>
+      services.AddControllers(options => 
+      {
+        options.Filters.Add(typeof(MyGlobalExceptionFilterAttribute));
+        options.Conventions.Add(new SwaggerGroupByVersion());
+      }).AddJsonOptions(options =>
         {
           options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         }).AddNewtonsoftJson();
@@ -35,6 +39,9 @@ namespace WebAPIAuthors
 
       services.AddSwaggerGen(e =>
       {
+        e.SwaggerDoc("v1",new OpenApiInfo { Title = "WebAPIAuthors", Version="v1"});
+        e.SwaggerDoc("v2", new OpenApiInfo { Title = "WebAPIAuthors", Version = "v2" });
+
         e.AddSecurityDefinition(name: "Bearer", new OpenApiSecurityScheme
         {
           Name = "Authorization",
@@ -166,7 +173,11 @@ namespace WebAPIAuthors
       if (env.IsDevelopment())
       {
         app.UseSwagger();
-        app.UseSwaggerUI();
+        app.UseSwaggerUI(c =>
+        {
+          c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebAPIAuthors v1");
+          c.SwaggerEndpoint("/swagger/v2/swagger.json", "WebAPIAuthors v2");
+        });
       }
 
       app.UseHttpsRedirection();

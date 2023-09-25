@@ -5,10 +5,8 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAPIAuthors.DTOs.Author;
-using WebAPIAuthors.DTOs.HATEOAS;
 using WebAPIAuthors.Entities;
 using WebAPIAuthors.Filters;
-using WebAPIAuthors.Services;
 
 namespace WebAPIAuthors.Controllers.V2
 {

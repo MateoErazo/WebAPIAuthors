@@ -1,18 +1,20 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 using WebAPIAuthors.Filters;
 using WebAPIAuthors.Middlewares;
 using WebAPIAuthors.Services;
 using WebAPIAuthors.utilities;
-using static System.Net.WebRequestMethods;
 
+[assembly: ApiConventionType(typeof(DefaultApiConventions))]
 namespace WebAPIAuthors
 {
   public class Startup
@@ -86,6 +88,10 @@ namespace WebAPIAuthors
             new string[]{}
           }
         });
+
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory,xmlFile);
+        e.IncludeXmlComments(xmlPath);
 
       });
 

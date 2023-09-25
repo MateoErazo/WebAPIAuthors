@@ -143,7 +143,8 @@ namespace WebAPIAuthors
       {
         options.AddDefaultPolicy(policy =>
         {
-          policy.WithOrigins(new string[] { "https://restninja.io" }).AllowAnyMethod().AllowAnyHeader();
+          policy.WithOrigins(new string[] { "https://restninja.io" }).AllowAnyMethod().AllowAnyHeader()
+          .WithExposedHeaders(new string[] { "totalRecordsAmount" });
         });
       });
 

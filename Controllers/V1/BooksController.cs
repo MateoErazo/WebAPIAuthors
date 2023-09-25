@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAPIAuthors.DTOs.Book;
+using WebAPIAuthors.DTOs.Pagination;
 using WebAPIAuthors.Entities;
+using WebAPIAuthors.utilities;
 
 namespace WebAPIAuthors.Controllers.V1
 {
@@ -33,9 +35,14 @@ namespace WebAPIAuthors.Controllers.V1
         /// </summary>
         /// <returns>The list of all book in database</returns>
         [HttpGet("all", Name = "getAllBooks")]
-        public async Task<ActionResult<List<BookWithAuthorsDTO>>> GetAllBooks()
+        public async Task<ActionResult<List<BookWithAuthorsDTO>>> GetAllBooks(
+          [FromQuery] PaginationDTO paginationDTO)
         {
-            List<Book> books = await context.Books
+            var queryable = context.Books.AsQueryable();
+            await HttpContext.InsertPaginationParametersInHead(queryable);
+
+
+            List<Book> books = await queryable.OrderBy(x=>x.Title).ApplyPagination(paginationDTO)
               .Include(x => x.AuthorBooks)
               .ThenInclude(x => x.Author)
               .ToListAsync();

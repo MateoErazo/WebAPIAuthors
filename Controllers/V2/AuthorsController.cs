@@ -5,8 +5,10 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAPIAuthors.DTOs.Author;
+using WebAPIAuthors.DTOs.Pagination;
 using WebAPIAuthors.Entities;
 using WebAPIAuthors.Filters;
+using WebAPIAuthors.utilities;
 
 namespace WebAPIAuthors.Controllers.V2
 {
@@ -37,9 +39,15 @@ namespace WebAPIAuthors.Controllers.V2
         /// <returns>The list of all authors in database</returns>
         [ServiceFilter(typeof(HATEOASAuthorFilterAttribute))]
         [HttpGet("all", Name = "getAllAuthorsV2")]
-        public async Task<ActionResult<List<AuthorWithBooksDTO>>> GetAllAuthors([FromHeader] string includeHATEOAS)
+        public async Task<ActionResult<List<AuthorWithBooksDTO>>> GetAllAuthors(
+          [FromHeader] string includeHATEOAS,
+          [FromQuery] PaginationDTO paginationDTO)
         {
-            List<Author> authors = await context.Authors
+            var queryable = context.Authors.AsQueryable();
+            await HttpContext.InsertPaginationParametersInHead(queryable);
+
+
+            List<Author> authors = await queryable.OrderBy(author => author.Name).ApplyPagination(paginationDTO)
               .Include(x => x.AuthorBooks)
               .ThenInclude(x => x.Book)
               .ToListAsync();

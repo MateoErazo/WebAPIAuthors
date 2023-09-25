@@ -11,6 +11,7 @@ using WebAPIAuthors.Filters;
 using WebAPIAuthors.Middlewares;
 using WebAPIAuthors.Services;
 using WebAPIAuthors.utilities;
+using static System.Net.WebRequestMethods;
 
 namespace WebAPIAuthors
 {
@@ -39,8 +40,27 @@ namespace WebAPIAuthors
 
       services.AddSwaggerGen(e =>
       {
-        e.SwaggerDoc("v1",new OpenApiInfo { Title = "WebAPIAuthors", Version="v1"});
-        e.SwaggerDoc("v2", new OpenApiInfo { Title = "WebAPIAuthors", Version = "v2" });
+        e.SwaggerDoc("v1",new OpenApiInfo {
+          Title = "WebAPIAuthors", 
+          Version="v1",
+          Description="This is an API that allows you to work with Authors and Books",
+          Contact = new OpenApiContact
+          {
+            Name = "Jesús Mateo Erazo Paladinez",
+            Url = new Uri("https://github.com/MateoErazo")
+          }
+        });
+
+        e.SwaggerDoc("v2", new OpenApiInfo { 
+          Title = "WebAPIAuthors", 
+          Version = "v2",
+          Description = "This is an API that allows you to work with Authors and Books",
+          Contact = new OpenApiContact
+          {
+            Name = "Jesús Mateo Erazo Paladinez",
+            Url= new Uri("https://github.com/MateoErazo")
+          }
+        });
 
         e.AddSecurityDefinition(name: "Bearer", new OpenApiSecurityScheme
         {

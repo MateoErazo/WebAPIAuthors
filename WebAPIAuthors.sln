@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33815.320
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebAPIAuthors", "WebAPIAuthors.csproj", "{CFDEA1E4-C059-442E-B213-96B82A1F8454}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebAPIAuthors", "WebAPIAuthors.csproj", "{CFDEA1E4-C059-442E-B213-96B82A1F8454}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebAPIAuthors.tests", "..\WebAPIAuthors.tests\WebAPIAuthors.tests.csproj", "{BA7E18FB-B9E3-4B56-ABBC-0B0A4DF3885B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{CFDEA1E4-C059-442E-B213-96B82A1F8454}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CFDEA1E4-C059-442E-B213-96B82A1F8454}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CFDEA1E4-C059-442E-B213-96B82A1F8454}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA7E18FB-B9E3-4B56-ABBC-0B0A4DF3885B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA7E18FB-B9E3-4B56-ABBC-0B0A4DF3885B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA7E18FB-B9E3-4B56-ABBC-0B0A4DF3885B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA7E18FB-B9E3-4B56-ABBC-0B0A4DF3885B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

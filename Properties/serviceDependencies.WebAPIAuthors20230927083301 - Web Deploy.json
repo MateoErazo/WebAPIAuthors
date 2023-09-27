@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "identityapp1": {
+      "ignored": "true",
+      "type": "identityapp"
+    },
+    "mssql1": {
+      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourcegroups/[parameters('resourceGroupName')]/providers/Microsoft.Web/sites/WebAPIAuthors20230927083301/providers/Microsoft.ServiceLinker/linkers/ConnectionStringsProduction_2490CF0795",
+      "secretStore": "AzureAppSettings",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourcegroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/webapiauthorsdbserver/databases/WebAPIAuthors_db",
+      "type": "mssql.azure",
+      "connectionId": "ConnectionStrings:Production",
+      "dynamicId": null
+    }
+  }
+}

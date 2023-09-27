@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.ApplicationInsights.AspNetCore.Extensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -29,7 +30,7 @@ namespace WebAPIAuthors
 
     public void ConfigureServices(IServiceCollection services)
     {
-      services.AddControllers(options => 
+      services.AddControllers(options =>
       {
         options.Filters.Add(typeof(MyGlobalExceptionFilterAttribute));
         options.Conventions.Add(new SwaggerGroupByVersion());
@@ -42,10 +43,10 @@ namespace WebAPIAuthors
 
       services.AddSwaggerGen(e =>
       {
-        e.SwaggerDoc("v1",new OpenApiInfo {
-          Title = "WebAPIAuthors", 
-          Version="v1",
-          Description="This is an API that allows you to work with Authors and Books",
+        e.SwaggerDoc("v1", new OpenApiInfo {
+          Title = "WebAPIAuthors",
+          Version = "v1",
+          Description = "This is an API that allows you to work with Authors and Books",
           Contact = new OpenApiContact
           {
             Name = "Jesús Mateo Erazo Paladinez",
@@ -53,14 +54,14 @@ namespace WebAPIAuthors
           }
         });
 
-        e.SwaggerDoc("v2", new OpenApiInfo { 
-          Title = "WebAPIAuthors", 
+        e.SwaggerDoc("v2", new OpenApiInfo {
+          Title = "WebAPIAuthors",
           Version = "v2",
           Description = "This is an API that allows you to work with Authors and Books",
           Contact = new OpenApiContact
           {
             Name = "Jesús Mateo Erazo Paladinez",
-            Url= new Uri("https://github.com/MateoErazo")
+            Url = new Uri("https://github.com/MateoErazo")
           }
         });
 
@@ -90,7 +91,7 @@ namespace WebAPIAuthors
         });
 
         var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-        var xmlPath = Path.Combine(AppContext.BaseDirectory,xmlFile);
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
         e.IncludeXmlComments(xmlPath);
 
       });
@@ -156,6 +157,10 @@ namespace WebAPIAuthors
       services.AddTransient<HATEOASAuthorFilterAttribute>();
       services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
+      services.AddApplicationInsightsTelemetry(
+        new ApplicationInsightsServiceOptions { ConnectionString = Configuration["ApplicationInsights:ConnectionString"] 
+        });
+
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
@@ -197,15 +202,18 @@ namespace WebAPIAuthors
 
       app.UseLogResponsesHttps();
       
+      /*
       if (env.IsDevelopment())
       {
-        app.UseSwagger();
-        app.UseSwaggerUI(c =>
-        {
-          c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebAPIAuthors v1");
-          c.SwaggerEndpoint("/swagger/v2/swagger.json", "WebAPIAuthors v2");
-        });
       }
+      */
+
+      app.UseSwagger();
+      app.UseSwaggerUI(c =>
+      {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebAPIAuthors v1");
+        c.SwaggerEndpoint("/swagger/v2/swagger.json", "WebAPIAuthors v2");
+      });
 
       app.UseHttpsRedirection();
 

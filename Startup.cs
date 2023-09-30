@@ -113,7 +113,7 @@ namespace WebAPIAuthors
 
       services.AddTransient<MyActionFilterAttribute>();
 
-      services.AddHostedService<WriteLogInFile>();
+      //services.AddHostedService<WriteLogInFile>();
 
       services.AddAutoMapper(typeof(Startup));
 
